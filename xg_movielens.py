@@ -10,6 +10,7 @@ import random
 
 # load data
 lens = pd.read_csv("dataset.csv", names=["MovieId","Rate","OccupationId","Age","Gender","ZipCode"], dtype={"MovieId":np.int64,"Rate":np.int64,"OccupationId":np.int64,"Age":np.int64,"Gender":np.int64,"ZipCode":np.int64})
+lens.drop(labels=["MovieId"], axis=1, inplace=True)
 
 y = []
 for l in lens["Rate"]:

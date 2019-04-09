@@ -24,7 +24,7 @@ import pandas as pd
 #f.close()
 
 lens = pd.read_csv("dataset.csv", names=["MovieId","Rate","OccupationId","Age","Gender","ZipCode"], dtype={"MovieId":np.int64,"Rate":np.int64,"OccupationId":np.int64,"Age":np.int64,"Gender":np.int64,"ZipCode":np.int64})
-
+seed = 7
 y = []
 for l in lens["Rate"]:
 	liked = 1
@@ -37,11 +37,11 @@ for l in lens["Rate"]:
 x = lens
 x.drop(labels=["Rate"], axis=1, inplace=True)
 
-X_train, X_validation, y_train, y_validation = train_test_split(x, y, random_state=0)
+X_train, X_validation, y_train, y_validation = train_test_split(x, y, random_state=seed)
 
-learning_rates = [0.05, 0.1]
+learning_rates = [0.001]
 for learning_rate in learning_rates:
-    gb = GradientBoostingClassifier(n_estimators=200, learning_rate = learning_rate, max_features=3, max_depth = 3, random_state = 42)
+    gb = GradientBoostingClassifier(n_estimators=1000, learning_rate = learning_rate, max_depth = 3, random_state = seed)
     gb.fit(X_train, y_train)
     print("Learning rate: ", learning_rate)
     print("Accuracy score (training): {0:.3f}".format(gb.score(X_train, y_train)))
