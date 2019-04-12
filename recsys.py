@@ -142,6 +142,7 @@ users_data = users_test[0:5]#[users_test[0] for _ in range(0, 50)]
 #make a prediction of how much user[i] loves books[i] and sort it
 predictions = model.predict([users_data, movies_data])
 predictions = np.array([a[0] for a in predictions])
+
 print("predictions = "+str(predictions))
 print("reality = "+str(y_test[0:5]))
 
@@ -149,4 +150,13 @@ for i in range(0, 5):
 	film_genres = ','.join([genres[g] for g in range(0, len(genres)) if movies_data[i][g] == 1])
 	p1 = "A "+str(label_encoders[0].inverse_transform([users_data[i][0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([users_data[i][1]])[0])+" aged by "+str(users_data[i][3])+" living in "+str(label_encoders[2].inverse_transform([users_data[i][2]])[0])
 	p2 = " may gives "+str(predictions[i])+" stars to a film with "+film_genres+" genres"
-	print(p1+p2)
+
+	recommended_movies_title = []
+	for j in range(0, movies.shape[0]):
+		if movies[j].tolist() == movies_data[i].tolist():
+			recommended_movies_title.append(items.loc[i].values[1])
+	recommended_movies_title = list(set(recommended_movies_title))
+	p3 = " => "+','.join(recommended_movies_title)
+	print(p1+p2+p3)
+	#print(recommended_movies_title)
+#then get films with genres which gets the highest mark

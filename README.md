@@ -42,14 +42,14 @@ A Male user who is programmer aged by 30 living in 6355 has 81.0% of chance to l
 
 ### recsys.py
 This recommender is the final one, it's a mix between collaborative and content-based filtering because it concatenates opinions and caracteristics of each users. This is the most useful recommender.
-It predicts user rating in function of it's opinion about film genre he likes (with previous films he liked) and in function of it's caracteristics (Age, Gender, Occupation and ZipCode). 
+It predicts user rating in function of it's opinion about film genre he likes (with previous films he liked) and in function of it's caracteristics (Age, Gender, Occupation and ZipCode).
 There must be a lot of data to learn correctly and training must be very accurate.
 
 ```
 >>> python3 recsys.py
 
 Output :
-A F user who is educator aged by 50 living in 98027 may gives 3.9976962 stars to a film with Drama,Thriller genres.
+A F user who is educator aged by 50 living in 98027 may gives 3.6091807 stars to a film with Comedy,Romance genres => Get Shorty (1995)
 ```
 
 ### Prerequisites
