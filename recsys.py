@@ -4,6 +4,7 @@
 import sys, os
 import numpy as np
 import pandas as pd
+import pickle, json, random
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
@@ -26,6 +27,7 @@ genres = pd.read_csv("./ml-100k/u.genre", names=["Genre", "GenreId"], sep="|")
 items = pd.read_csv("./ml-100k/u.item", names=["MovieId", "MovieTitle", "ReleaseDate","VideoReleaseDate", "IMDbURL", "unknown", "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"], sep="|")
 occupations = pd.read_csv("./ml-100k/u.occupation", names=["Occupation", "OccupationId"], sep="|")
 users = pd.read_csv("./ml-100k/u.user", names=["UserId", "Age", "Gender", "Occupation", "ZipCode"], sep="|")
+genres = ["Action", "Adventure", "Animation", "Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]
 
 n_users = len(ratings.UserId.unique())
 n_items = len(ratings.MovieId.unique())
@@ -34,13 +36,15 @@ movie_ratings = pd.merge(items, ratings)
 fusers = pd.merge(occupations, users)
 lens = pd.merge(movie_ratings, fusers)
 #"Action", "Adventure", "Animation", "Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
+
+
+movieids = lens["MovieId"].values
+movietitles = lens["MovieTitle"].values
+
 columns_to_drop = ["MovieTitle", "OccupationId", "TimeStamp", "UserId", "ReleaseDate", "VideoReleaseDate", "IMDbURL", "unknown"]
 lens.drop(labels=columns_to_drop, axis=1, inplace=True)
 lens.drop(labels=["MovieId"], axis=1, inplace=True)
 
-genres = ["Action", "Adventure", "Animation", "Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]
-
-seed = 7
 
 print("Generating data ...")
 y = lens["Rate"].values
@@ -51,6 +55,67 @@ movies = lens.copy()
 movies.drop(labels=["Age", "Gender", "Occupation", "ZipCode"], axis=1, inplace=True)
 movies = np.array(movies)
 print("Movies ... OK")
+
+def user2vec(label_encoders, age, gender, occupation, zipcode):
+	user = []
+	for i, val in enumerate([gender, occupation, zipcode]):
+		feature = label_encoders[i].transform([val])
+		user.append(feature[0])
+	user.append(age)
+	return user
+
+def getRecommendedMoviesGenresBasedOnUser(label_encoders, user):
+	"""get most possible opinions about movies a user may likes"""
+	all_possible_opinions = [json.loads(n) for n in set([json.dumps(m) for m in movies.tolist()])]
+
+	pred = predictRating(user, all_possible_opinions)
+	max_rates = sorted(pred, reverse=True)[0:5]#max rated film genres user would like
+
+	recommendations = []
+
+	for max_rate in max_rates:
+		max_rate_index = pred.index(max_rate)
+		most_possible_opinion = all_possible_opinions[max_rate_index]
+
+		recommendation = {
+			"movie_genres":most_possible_opinion,
+			"rating":max_rate
+		}
+
+		recommendations.append(recommendation)
+
+	return recommendations
+
+def getMoviesBasedOnUserAndOpinions(label_encoders, user, opinion):
+	"""get movies from a user opinion and how much he likes this opinion and a user"""
+	rate = predictRating(user, [opinion])[0]
+	movie_ids,	movie_titles = getMoviesFromOpinion(opinion.tolist())
+
+	recommendation = {
+		"movie_ids":movie_ids,
+		"movie_titles":movie_titles,
+		"movie_genres":opinion,#which is user opinion about movie's genres
+		"rating":rate
+	}
+	return recommendation
+
+def predictRating(user, genres):
+	"""get how much a user would rate a movie in function of movie's genres"""
+	users = [user for o in genres]
+	pred = model.predict([users, genres])
+
+	pred = [p[0] for p in pred]
+
+	return pred
+
+def getMoviesFromOpinion(opinion):
+	most_possible_movie_indexs = []
+	for j in range(0, movies.shape[0]):
+		if movies[j].tolist() == opinion:
+			most_possible_movie_indexs.append(j)
+	most_possible_movie_ids = list(set([movieids[ind] for ind in most_possible_movie_indexs]))
+	most_possible_movie_titles = [movietitles[id] for id in most_possible_movie_ids]
+	return most_possible_movie_ids, most_possible_movie_titles
 
 #onehot encode classical values and concatenate them each other
 #/!\ since we user embedding layer in NN we don't need to onehot encode
@@ -92,6 +157,47 @@ y_train, y_test = y[0:cut_index], y[cut_index:y.shape[0]]
 if os.path.exists("recsys.h5"):
 	print("A trained model has been found !")
 	model = load_model("recsys.h5")
+
+	with open('label_encoders.pkl', 'rb') as f:
+		label_encoders = pickle.load(f)
+
+	user = np.array(user2vec(label_encoders, 20, "M", "student", "27510"))
+	user_opinions = np.array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
+
+	print("#####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####")
+	#Get the best user profile which correspond to the given user and movies corresponding to that profile
+	recommendations = getRecommendedMoviesGenresBasedOnUser(label_encoders, user)
+
+	for recommendation in recommendations:
+		film_genres = ','.join([genres[g] for g in range(0, len(genres)) if recommendation["movie_genres"][g] == 1])
+		p1 = "A "+str(label_encoders[0].inverse_transform([user[0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([user[1]])[0])+" aged by "+str(user[3])+" living in "+str(label_encoders[2].inverse_transform([user[2]])[0])
+		p2 = " may gives "+str(recommendation["rating"])+" stars to a film with "+film_genres+" genres"
+		print(p1+p2)
+
+	print()
+
+	print("#####FIND BEST MOVIES IN FUNCTION OF MOVIE'S GENRES USER MAY LIKE#####")
+	for recommendation in recommendations:
+		rec = getMoviesBasedOnUserAndOpinions(label_encoders, user, np.array(recommendation["movie_genres"]))
+		film_genres = ','.join([genres[g] for g in range(0, len(genres)) if rec["movie_genres"][g] == 1])
+		p1 = "A "+str(label_encoders[0].inverse_transform([user[0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([user[1]])[0])+" aged by "+str(user[3])+" living in "+str(label_encoders[2].inverse_transform([user[2]])[0])
+		p2 = " who likes "+film_genres+" may gives "+str(rec["rating"])+" stars to"
+		p3 = " => "+','.join(rec["movie_titles"])
+		print(p1+p2+p3)
+
+	print()
+	print("#####PREDICT USER RATING ABOUT A RANDOM MOVIE#####")
+	movie_index = random.randint(0, movies.shape[0]-1)
+	movie_genres = movies[movie_index]
+	movie_genres_str = ','.join([genres[g] for g in range(0, len(genres)) if movie_genres[g] == 1])
+	movie_id = movieids[movie_index]
+	movie_title = movietitles[movie_index]
+	movie_rate = predictRating(user, [movie_genres])[0]
+
+	p1 = "A "+str(label_encoders[0].inverse_transform([user[0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([user[1]])[0])+" aged by "+str(user[3])+" living in "+str(label_encoders[2].inverse_transform([user[2]])[0])
+	p2 = " would give "+str(movie_rate)+" starts to "+movie_title+" ("+movie_genres_str+")"
+	print(p1+p2)
+
 else:
 	print("No trained model has been found, let's build it !")
 	print("Creating a Y model with keras ...")
@@ -120,43 +226,46 @@ else:
 	history = model.fit([users_train, movies_train], y_train, epochs=20, verbose=1, batch_size=32)
 	model.save('recsys.h5')
 
+	with open('label_encoders.pkl', 'wb') as f:
+		pickle.dump(label_encoders, f)
+
 	plt.plot(history.history['loss'])
 	plt.xlabel("Epochs")
 	plt.ylabel("Training Error")
-	plt.show()
+	#plt.show()
 
-#score = model.evaluate([users_test, movies_test], y_test)
-#print(score)
-#print('Test loss:', score[0])
-#print('Test acc:', score[1])
+	#score = model.evaluate([users_test, movies_test], y_test)
+	#print(score)
+	#print('Test loss:', score[0])
+	#print('Test acc:', score[1])
 
-print("################TEST################")
+#print("################TEST################")
 # Creating dataset for making recommendations for the first user (id=1)
 
-movies_data = movies_test[0:5]#movies' genres that user has not watched yet
+#movies_data = movies_test[0:5]#movies' genres that user has not watched yet
 #print(movies_data[:50])
-users_data = users_test[0:5]#[users_test[0] for _ in range(0, 50)]
+#users_data = users_test[0:5]#[users_test[0] for _ in range(0, 50)]
 #print(users_data)
 #print(movies_data)
 
 #make a prediction of how much user[i] loves books[i] and sort it
-predictions = model.predict([users_data, movies_data])
-predictions = np.array([a[0] for a in predictions])
+#predictions = model.predict([users_data, movies_data])
+#predictions = np.array([a[0] for a in predictions])
 
-print("predictions = "+str(predictions))
-print("reality = "+str(y_test[0:5]))
+#print("predictions = "+str(predictions))
+#print("reality = "+str(y_test[0:5]))
 
-for i in range(0, 5):
-	film_genres = ','.join([genres[g] for g in range(0, len(genres)) if movies_data[i][g] == 1])
-	p1 = "A "+str(label_encoders[0].inverse_transform([users_data[i][0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([users_data[i][1]])[0])+" aged by "+str(users_data[i][3])+" living in "+str(label_encoders[2].inverse_transform([users_data[i][2]])[0])
-	p2 = " may gives "+str(predictions[i])+" stars to a film with "+film_genres+" genres"
+#for i in range(0, 5):
+	#film_genres = ','.join([genres[g] for g in range(0, len(genres)) if movies_data[i][g] == 1])
+	#p1 = "A "+str(label_encoders[0].inverse_transform([users_data[i][0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([users_data[i][1]])[0])+" aged by "+str(users_data[i][3])+" living in "+str(label_encoders[2].inverse_transform([users_data[i][2]])[0])
+	#p2 = " may gives "+str(predictions[i])+" stars to a film with "+film_genres+" genres"
 
-	recommended_movies_title = []
-	for j in range(0, movies.shape[0]):
-		if movies[j].tolist() == movies_data[i].tolist():
-			recommended_movies_title.append(items.loc[i].values[1])
-	recommended_movies_title = list(set(recommended_movies_title))
-	p3 = " => "+','.join(recommended_movies_title)
-	print(p1+p2+p3)
+	#recommended_movies_title = []
+	#for j in range(0, movies.shape[0]):
+		#if movies[j].tolist() == movies_data[i].tolist():
+			#recommended_movies_title.append(items.loc[i].values[1])
+	#recommended_movies_title = list(set(recommended_movies_title))
+	#p3 = " => "+','.join(recommended_movies_title)
+	#print(p1+p2+p3)
 	#print(recommended_movies_title)
 #then get films with genres which gets the highest mark

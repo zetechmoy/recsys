@@ -49,7 +49,14 @@ There must be a lot of data to learn correctly and training must be very accurat
 >>> python3 recsys.py
 
 Output :
-A F user who is educator aged by 50 living in 98027 may gives 3.6091807 stars to a film with Comedy,Romance genres => Get Shorty (1995)
+#####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####
+A M user who is student aged by 20 living in 27510 may gives 4.7243447 stars to a film with Action,Adventure,Romance,Sci-Fi,War genres
+
+#####FIND BEST MOVIES IN FUNCTION OF MOVIE'S GENRES USER MAY LIKE#####
+A M user who is student aged by 20 living in 27510 who likes Action,Adventure,Romance,Sci-Fi,War may gives 4.7243443 stars to => Sleepless in Seattle (1993),Miracle on 34th Street (1994)
+
+#####PREDICT USER RATING ABOUT A RANDOM MOVIE#####
+A M user who is student aged by 20 living in 27510 would give 4.7243443 starts to Star Wars (1977) (Action,Adventure,Romance,Sci-Fi,War)
 ```
 
 ### Prerequisites
@@ -63,6 +70,10 @@ sklearn
 tensorflow
 keras
 pandas
+random
+numpy
+pickle
+matplotlib
 ```
 
 ### Installing
@@ -72,10 +83,10 @@ First install python3 and pip3
 ```
 sudo apt install python3 python-pip3
 ```
-Then use pip3 to install sklearn and xgboost
+Then use pip3 to install needed python3's modules
 
 ```
-pip3 install pandas sklearn tensorflow keras
+pip3 install pandas sklearn tensorflow keras pandas random numpy pickle matplotlib
 ```
 
 ### References
@@ -91,7 +102,7 @@ pip3 install pandas sklearn tensorflow keras
 
 ## Authors
 
-* **Théo Guidoux** - *Everything* - [zetechmoy](https://github.com/zetechmoy) - [@TGuidoux](https://twitter.com/TGuidoux)
+* **Théo Guidoux** - [zetechmoy](https://github.com/zetechmoy) - [@TGuidoux](https://twitter.com/TGuidoux)
 
 ## License
 
