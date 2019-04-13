@@ -40,23 +40,40 @@ A Male user who is programmer aged by 30 living in 6355 has 81.0% of chance to l
 
 ## Collaborative and Content-Based Filtering
 
-### recsys.py
+### recsys_odds.py
 This recommender is the final one, it's a mix between collaborative and content-based filtering because it concatenates opinions and caracteristics of each users. This is the most useful recommender.
 It predicts user rating in function of it's opinion about film genre he likes (with previous films he liked) and in function of it's caracteristics (Age, Gender, Occupation and ZipCode).
 There must be a lot of data to learn correctly and training must be very accurate.
 
 ```
->>> python3 recsys.py
+>>> python3 recsys_odds.py
 
 Output :
 #####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####
-A M user who is student aged by 20 living in 27510 may gives 4.7243447 stars to a film with Action,Adventure,Romance,Sci-Fi,War genres
+A M user who is student aged by 20 living in 27510 may gives 4.7 stars to a movie with Action,Adventure,Romance,Sci-Fi,War genres
 
 #####FIND BEST MOVIES IN FUNCTION OF MOVIE'S GENRES USER MAY LIKE#####
-A M user who is student aged by 20 living in 27510 who likes Action,Adventure,Romance,Sci-Fi,War may gives 4.7243443 stars to => Sleepless in Seattle (1993),Miracle on 34th Street (1994)
+A M user who is student aged by 20 living in 27510 who likes Action,Adventure,Romance,Sci-Fi,War may gives 4.7 stars to => Sleepless in Seattle (1993),Miracle on 34th Street (1994)
 
 #####PREDICT USER RATING ABOUT A RANDOM MOVIE#####
-A M user who is student aged by 20 living in 27510 would give 4.7243443 starts to Star Wars (1977) (Action,Adventure,Romance,Sci-Fi,War)
+A M user who is student aged by 20 living in 27510 would give 4.7 stars to Star Wars (1977) (Action,Adventure,Romance,Sci-Fi,War)
+```
+
+### recsys_cls.py
+This recommender is the same as recsys_odds.py but uses classifier to predict the star class [0, 1, 0, 0, 0, 0] => 1 star & [0, 0, 0, 0, 0, 1] => 5 stars
+
+```
+>>> python3 recsys_cls.py
+
+Output :
+#####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####
+A M user who is student aged by 20 living in 27510 may gives 5 stars to a movie with Action,Adventure,Sci-Fi,Thriller genres
+
+#####FIND BEST MOVIES IN FUNCTION OF MOVIE'S GENRES USER MAY LIKE#####
+A M user who is student aged by 20 living in 27510 who likes Documentary,War may gives 5 stars to => Aliens (1986)
+
+#####PREDICT USER RATING ABOUT A RANDOM MOVIE#####
+A M user who is student aged by 20 living in 27510 would give 4 stars to Desperado (1995) (Action,Romance,Thriller)
 ```
 
 ### Prerequisites
