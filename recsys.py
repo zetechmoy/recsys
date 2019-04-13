@@ -168,7 +168,7 @@ if os.path.exists("recsys.h5"):
 
 	print("#####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####")
 	#Get the best user profile which correspond to the given user and movies corresponding to that profile
-	recommendations = getRecommendedMoviesGenresBasedOnUser(label_encoders, user, rec_nb=50)
+	recommendations = getRecommendedMoviesGenresBasedOnUser(label_encoders, user, rec_nb=5)
 
 	for recommendation in recommendations:
 		film_genres = ','.join([genres[g] for g in range(0, len(genres)) if recommendation["movie_genres"][g] == 1])
