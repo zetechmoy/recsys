@@ -48,6 +48,8 @@ lens.drop(labels=["MovieId"], axis=1, inplace=True)
 
 print("Generating data ...")
 y = lens["Rate"].values
+y = np.array([1 if rate >= 3 else 0 for rate in y ])#use classification use odds*5 instead of ratings => more accurate
+
 lens.drop(labels=["Rate"], axis=1, inplace=True)
 print("Ratings ... OK")
 
@@ -64,12 +66,12 @@ def user2vec(label_encoders, age, gender, occupation, zipcode):
 	user.append(age)
 	return user
 
-def getRecommendedMoviesGenresBasedOnUser(label_encoders, user):
+def getRecommendedMoviesGenresBasedOnUser(label_encoders, user, rec_nb=5):
 	"""get most possible opinions about movies a user may likes"""
 	all_possible_opinions = [json.loads(n) for n in set([json.dumps(m) for m in movies.tolist()])]
 
 	pred = predictRating(user, all_possible_opinions)
-	max_rates = sorted(pred, reverse=True)[0:5]#max rated film genres user would like
+	max_rates = sorted(pred, reverse=True)[0:rec_nb]#max rated film genres user would like
 
 	recommendations = []
 
@@ -104,7 +106,7 @@ def predictRating(user, genres):
 	users = [user for o in genres]
 	pred = model.predict([users, genres])
 
-	pred = [p[0] for p in pred]
+	pred = [p[0]*5.0 for p in pred]#prediction*5 to give a mark out of 5, it's more accurate than predicting stars
 
 	return pred
 
@@ -166,7 +168,7 @@ if os.path.exists("recsys.h5"):
 
 	print("#####FIND BEST MOVIE'S GENRES IN FUNCTION OF USER#####")
 	#Get the best user profile which correspond to the given user and movies corresponding to that profile
-	recommendations = getRecommendedMoviesGenresBasedOnUser(label_encoders, user)
+	recommendations = getRecommendedMoviesGenresBasedOnUser(label_encoders, user, rec_nb=50)
 
 	for recommendation in recommendations:
 		film_genres = ','.join([genres[g] for g in range(0, len(genres)) if recommendation["movie_genres"][g] == 1])
@@ -195,7 +197,7 @@ if os.path.exists("recsys.h5"):
 	movie_rate = predictRating(user, [movie_genres])[0]
 
 	p1 = "A "+str(label_encoders[0].inverse_transform([user[0]])[0])+" user who is "+str(label_encoders[1].inverse_transform([user[1]])[0])+" aged by "+str(user[3])+" living in "+str(label_encoders[2].inverse_transform([user[2]])[0])
-	p2 = " would give "+str(movie_rate)+" starts to "+movie_title+" ("+movie_genres_str+")"
+	p2 = " would give "+str(movie_rate)+" stars to "+movie_title+" ("+movie_genres_str+")"
 	print(p1+p2)
 
 else:
