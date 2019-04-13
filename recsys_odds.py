@@ -156,11 +156,11 @@ movies_train, movies_test = movies[0:cut_index], movies[cut_index:movies.shape[0
 users_train, users_test = users[0:cut_index], users[cut_index:users.shape[0]]
 y_train, y_test = y[0:cut_index], y[cut_index:y.shape[0]]
 
-if os.path.exists("recsys.h5"):
+if os.path.exists("recsys_odds.h5"):
 	print("A trained model has been found !")
-	model = load_model("recsys.h5")
+	model = load_model("recsys_odds.h5")
 
-	with open('label_encoders.pkl', 'rb') as f:
+	with open('label_encoders_odds.pkl', 'rb') as f:
 		label_encoders = pickle.load(f)
 
 	user = np.array(user2vec(label_encoders, 20, "M", "student", "27510"))
@@ -226,9 +226,9 @@ else:
 	model.compile('adam', 'mean_squared_error', metrics=['acc'])
 	print("Learn ! Learn ! Learn !")
 	history = model.fit([users_train, movies_train], y_train, epochs=20, verbose=1, batch_size=32)
-	model.save('recsys.h5')
+	model.save('recsys_odds.h5')
 
-	with open('label_encoders.pkl', 'wb') as f:
+	with open('label_encoders_odds.pkl', 'wb') as f:
 		pickle.dump(label_encoders, f)
 
 	plt.plot(history.history['loss'])
