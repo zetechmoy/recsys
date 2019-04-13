@@ -78,20 +78,16 @@ def getRecommendedMoviesGenresBasedOnUser(label_encoders, user, rec_nb=5):
 	all_possible_opinions = [json.loads(n) for n in set([json.dumps(m) for m in movies.tolist()])]
 
 	pred = predictRating(user, all_possible_opinions)
-	max_rates = sorted(pred, reverse=True)#max rated film genres user would like
 
+	#sort prediction from bigger to lower and keep index with opinion
+	pred, all_possible_opinions = (list(t) for t in zip(*sorted(zip(pred, all_possible_opinions), reverse=True)))
 	recommendations = []
 
 	for i in range(0, rec_nb):
-		max_rate_index = 0
-
-		while all_possible_opinions[max_rate_index] in [r["movie_genres"] for r in recommendations]:
-			max_rate_index += 1
-		most_possible_opinion = all_possible_opinions[max_rate_index]
 
 		recommendation = {
-			"movie_genres":most_possible_opinion,
-			"rating":max_rates[max_rate_index]
+			"movie_genres":all_possible_opinions[i],
+			"rating":pred[i]
 		}
 
 		recommendations.append(recommendation)
